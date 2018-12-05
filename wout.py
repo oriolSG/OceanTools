@@ -6,6 +6,39 @@ Created on Tue Nov 13 11:02:36 2018
 """
 
 import wobus as wb
+#import numpy as np
+import pandas as pd
+from scipy.optimize import curve_fit 
+#https://stackoverflow.com/questions/22491628/extrapolate-values-in-pandas-dataframe
+#https://plot.ly/python/interpolation-and-extrapolation-in-1d/
+
+'''
+def avg(l):
+	"""Calculate the average of the data."""
+	return reduce(lambda x,y: x + y, l) / len(l)
+print "%.2f,%.2f" % (avg(hum), avg(temp))
+'''
+
+def readDAT(file='naca0018AR2coma5.dat',debug=False):
+    '''
+    Reads an aerodinamic profile data file and returns the cl and cd coefficients
+    '''
+    data=pd.read_csv(
+            file,
+            sep=',',
+            skiprows=1,
+            na_values=['NAN','nan','-NaN','-nan','NaN',-7999],
+            keep_default_na=False,
+            )
+    #odata=data.set_index('alpha') #could use angle of attack as index, Im not
+    if debug: 
+        #print(self.data.head())
+        print('Data \n',data)
+        #print(data)
+        print('Filtered data \n',data[(data.alpha>2.0) & (data.alpha<12.0)].alpha)
+        print(data.interpolate(method='nearest', axis=0))
+        
+    return data.CL, data.CD
 
 class naca4():
     '''
@@ -15,11 +48,10 @@ class naca4():
         P is the position of the maximum camber divided by 10. In the example P=4 so the maximum camber is at 0.4 or 40% of the chord.
         XX is the thickness divided by 100. In the example XX=12 so the thiickness is 0.12 or 12% of the chord.
     '''
-    def __init__(self, profile,temperature=25, density=1, pressure=1):
+    def __init__(self, profile,temperature=25, density=1, pressure=1, debug=False):
         if profile=='0017':
-            self.profile='0017'
-            self.cl = {'0' : 0.00, '0.5' : 0.04}
-            self.cd = {'0' : 0.009, '0.5' : 0.009}
+            self.profile='0018'
+            self.cl, self.cd = readDAT(debug=debug) #concatennating debug variable into readDAT
             self.temperature=temperature
             self.density=density
             self.pressure=pressure
@@ -40,10 +72,6 @@ class naca4():
             self.temperature=temperature
             self.density=density
             self.pressure=pressure
-            
-        
-
-
 
 #### MAIN PROGRAM FOR TEST.   
 if __name__ == '__main__':
@@ -61,12 +89,14 @@ if __name__ == '__main__':
     #Air density ----- Using wobus method
     rho=wb.air_density1(T,P,Td,debug=debug)    
     
-    wing=naca4('0025')
-    print('Naca profile',wing.profile)
-    print('  Cl')
-    for key, value in (wing.cl.items()):
-        print('    ',key, value)
-        
-    print('  Cd')
-    for key, value in (wing.cd.items()):
-        print('    ',key, value)
+    readDAT(debug=debug)
+    
+#    wing=naca4('0025',debug=debug)
+#    print('Naca profile',wing.profile)
+#    print('  Cl')
+#    for key, value in (wing.cl.items()):
+#        print('    ',key, value)
+#        
+#    print('  Cd')
+#    for key, value in (wing.cd.items()):
+#        print('    ',key, value)
